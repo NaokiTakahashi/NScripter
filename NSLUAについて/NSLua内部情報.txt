@@ -1,0 +1,88 @@
+--------------------------------------------
+以下、工事中、ちょっと時間かかるかもしれません。
+--------------------------------------------
+
+＜ＤＬＬ編＞
+ここより下は、C言語その他を使ってDLL関数を書く人向けのドキュメントです。
+Luaまでしか使わない場合はここより先の記述を読む必要はありません。
+
+Lua側の関数NL_bindを使って、任意のDLL内の関数をLuaから呼び出せるようになります。
+●NL_bind(DLLファイル名,DLLからエクスポートされている関数名,Luaに登録する関数名)
+例）
+NL_bind("sample.dll","binfunc","binfunc")
+以後、Luaソース内から、たとえばパラメータを二つとって戻り値が二つ返るような関数なら
+result1,result2=binfunc(param1,param2)
+のように使えます。
+
+luaのスタック等を操作するために、nslua.dllから以下の関数をexportしています。
+extern "C" {
+	bool NL_dostring (const char *mem);
+	void NL_register (const char *funcname,int (*f)(void *));
+	int NL_error(void *L,const char *errorstr,...);
+	void NL_settop(void *L,int index);
+	int NL_gettop(void *L);
+	int NL_isnumber(void *L,int index);
+	int NL_istable(void *L,int index);
+	int NL_isstring(void *L,int index);
+	int NL_isboolean(void *L,int index);
+	int NL_isnil(void *L,int index);
+	double NL_tonumber(void *L,int index);
+	int NL_tointeger(void *L,int index);
+	const char *NL_tostring(void *L,int index);
+	int NL_toboolean(void *L,int index);
+	void NL_pushnumber(void *L,double n);
+	void NL_pushinteger(void *L,int n);
+	void NL_pushstring(void *L,const char *str);
+	void NL_pushboolean(void *L,int b);
+	void NL_gettable(void *L,int index);
+	void NL_pop(void *L,int index);
+};
+
+使い方は、NL_をlua_と置き換えた関数（errorはluaL_errorですが）と同じです。
+
+
+nscr.exeからexportされている関数のうちから、Luaからバインドする上で
+使いやすそうなものを抜粋して紹介しておきます。
+Luaで問題なく出来ることはなるべくLuaでやったほうが楽だと思います。
+DIBのピクセル値を細かく操作するような仕事をDLLにまわすと大幅に高速化できます。
+他にも、以前のプラグインのために作られた関数はそのまま使えます。
+
+extern "C" {
+//汎用の関数
+	void NScrGetWindowSize (int *width,int *height);//ウィンドウのサイズを得る
+	HWND NScrGetWindow (void);//ウィンドウハンドルを得る。
+	BOOL NSAGetFile (const char *filename,char *nsaname,unsigned int *ptr,unsigned int *size);
+		//NSAアーカイブから、ファイルfilenameが格納されているnsaファイル名と先頭からの位置、ファイルサイズを得る。
+	BOOL NS2GetFile (const char *filename,char *ns2name,unsigned int *ptr,unsigned int *size);
+		//NS2アーカイブから、ファイルfilenameが格納されているns2ファイル名と先頭からの位置、ファイルサイズを得る。
+	BOOL NScrDoEvents (void);//NSDoEventsとほぼ同じ
+	void NScrExecWord(const char *script);//NSExecとほぼ同じ
+	void NScrGetMouse (int *x,int *y);//NSGetMouseとほぼ同じ
+	void NScrGetClick (int *l,int *r,int *w);//NSGetClickとほぼ同じ
+	BOOL NScrGetKey (const char *str);//NSGetKeyとほぼ同じ
+	void NScrSystemCall (const char *id);//NSSystemCallとほぼ同じ
+	void NScrRefreshWindow(void);//画面を更新する。
+	void NScrEffect (int effectnum,int effecttime,const char *effectstr);//エフェクトを実行する。NSEffectとほぼ同じ。
+
+//エフェクトを組むときの関数
+	HDC  NScrGetDestDC (void); // エフェクト後の画像のHDCを得る
+	HDC  NScrGetSrcDC (void);  // エフェクト前の画像のHDCを得る
+	void NScrGetDestDIB (DIBDATA *destdib); //エフェクト後の画像のDIBデータを得る
+	void NScrGetSrcDIB (DIBDATA *destdib);  //エフェクト前の画像のDIBデータを得る
+
+//NScripter側の機能でDIBを読み込む関数
+	void AllocDIB (DIBDATA *dib,const char *filename);//filenameで指定された画像をロードし、DIB領域を割り当てる。
+	void FreeDIB (DIBDATA *dib);//割り当てられた領域を開放する。AllocDIBで割り当てたすべてについて呼ぶこと。
+
+//スプライト情報の取得関数
+	void GetSpriteData (int sp,int *width,int *height,int *cellmax);//スプライトの情報を得る
+	void GetSpriteDIB (DIBDATA *d);//スプライトの画像データを得る。
+};
+
+struct DIBDATA {
+	//NScripter内部のDIBのデータ。常に24bitで、DIBの通常の仕様どおりy座標が大きいほうから入っている。
+	int width;
+	int height;
+	int color;
+	unsigned char *bits;
+};

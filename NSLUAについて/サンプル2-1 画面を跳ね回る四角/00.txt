@@ -1,0 +1,14 @@
+*define
+luacall animation
+luasub animestart
+luasub animestop
+game
+
+*start
+animestart
+本文ですー。@
+うりゃうりゃうりゃー。@
+バックグラウンドで動いています。@
+animestop
+とめました。@
+end

@@ -1,0 +1,25 @@
+*define
+luasub test1 ;テスト関数１
+luasub test2 ;テスト関数２
+luasub test3 ;テスト関数３
+luasub test4 ;テスト関数４
+game
+
+*start
+テスト関数１（引数なし）@
+test1
+テスト関数２（引数ひとつ）@
+test2 "あいうえお"
+テスト関数３（引数ふたつ、一つ目が戻り値）@
+test3 %4,"かきくけこ"
+関数ｔｅｓｔ３から%4が戻りました。@
+テスト関数４（引数なし、NSGotoの実験）@
+test4
+textclear
+bg black,10,500
+goto *start
+
+
+*label
+テスト関数４で「はい」を選んだらここに飛んできます。@
+end

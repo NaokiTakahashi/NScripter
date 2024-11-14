@@ -1,0 +1,267 @@
+＜低水準インタフェース編＞
+※実例はサンプル３をごらんください。
+
+■Lua関数からNScripter機能を呼び出す関数
+●NSEnd()
+　NScripterの動作を終了します。
+
+●NSClick()
+　click命令と等価です。
+
+●width,height=NSGetWindowSize()
+　NScripterのウィンドウの表示領域の大きさを得ます。
+
+●skipmode=NSGetSkip()
+　スキップ状態を取得します。0=スキップモードではない 1=スキップモード 2=オートモード です。
+
+●NSOkBox(text,title)
+ ダイアログボックスを表示します。
+ NScripterでいうmesbox命令ですが、本文とタイトルの指定順が逆になっていますのでご注意ください。
+ （こちらのほうがWindowsでは標準のようなので、標準に従うことにしました。）
+例）
+NSOkBox("本文です","タイトルです。")
+
+●result=NSYesNoBox(text,title)
+ はい／いいえをたずねるダイアログボックスを表示します。戻り値はbooleanです。
+ NScripterでいうyesbox命令ですが、本文とタイトルが逆になっていますのでご注意ください。
+例）
+result=NSYesNoBox("質問です","タイトルです") -- はいを押せばresult=true、いいえならresult=false
+
+●count=NSTimer()
+ 1msに1増え続けるタイマーを取得します。resettimer gettimerと同じ精度です。
+ Windowsが起動してから経過したミリ秒を指すカウンタは、ひたすら増えていくだけです。
+ この関数からは値を取得することしか出来ません。二回呼び出して、その差をとることで、
+ 経過時間が正確にわかります。
+例）
+ count=NSTimer()
+
+●NSLuaAnimationInterval(intervalms)
+ アニメーション割り込みの発生間隔を指定します。
+ ミリ秒単位で指定出来ますが、その時間で必ず来るとは限りません。
+ 物理的に間に合わない場合はかなり遅れて飛んでくることになります。
+ 実際にどのタイミングで呼び出されたかは、NSTimer()を使って取得してください。
+ 例）
+ NSLuaAnimationInterval(20) -- 20ミリ秒に一回呼ばれる
+
+●NSLuaAnimationMode(boolswitch)
+ NSLuaアニメーション割り込みを開始したり止めたり出来ます。
+ デフォルトはfalseですので、設定が終わったらこの関数でtrueを指定して、
+ 割り込みを開始してください。Luaで操作したいオブジェクトがひとつもないときは、
+ falseを指定して割り込みをとめることが出来ます。trueを指定すればまた割り込みが発生します。
+ 例）
+ NSLuaAnimationMode(true)
+
+●x,y=NSGetMouse()
+ マウスの位置を取得します。画面外の場合は-1,-1が返ります。
+ 例）
+ x,y=NSGetMouse()
+
+●l,r,w,ld,rd=NSGetClick()
+ 最後に入力されたマウスクリックを取得します。
+ lは左クリックアップ（trueかfalse）、rは右クリックアップ（trueかfalse）、wはホイール入力（整数）
+ ldは左クリックダウン（trueかfalse）、rdは右クリックダウン（trueかfalse）です。
+ 基本的にはlとrとwを見ておけばいいです。アクションゲーム等でldやrdを使うこともあるかもしれません。
+ Luaは戻り値を省略できるので、後ろが必要ない場合は省けます。
+ 例）
+ l=NSGetMouse() -- 左クリックだけ取得
+ l,r,w=NSGetMouse() -- 左右クリックとホイールを取得
+ l,r,w,ld,rd=NSGetMouse() -- 全部取得
+
+●b=NSGetKey(keycode)
+ そのキーが今押されているかどうかをtrueかfalseで返します。
+ NScripter命令の「checkkey」とだいたい同じです。
+ keycodeには次の文字列が指定できます。
+　・英字１文字、数字、スペースなどはそのまま指定できます。
+　・"ESC" エスケープキー
+　・"SPACE"でもスペースキーは取得できます。
+　・"RETURN" "ENTER" リターンキー
+　・"CTRL" コントロールキー
+　・"UP" "DOWN" "LEFT" "RIGHT" カーソルキー上下左右
+　・"F1"～"F12" ファンクションキー
+　・"PAGEUP" "PAGEDOWN" ページアップ、ダウンキー
+　・"SHIFT" シフトキー
+　例）
+  b=checkkey("CTRL") -- CTRLキーが押されていれば１
+
+●NSSleep(sleepms)
+ 指定した時間（ミリ秒単位）ほかのスレッドに動作を明け渡します。
+ NScripter命令の「wait」とだいたい同じです。
+ 動作をすぐにNScripterに戻すスクリプトでは必要ありませんが、
+ 長時間Luaスクリプトを走らせっぱなしにするとCPU使用率が上がるので、
+ 適度にNSSleep(1)とかNSSleep(2)とかを呼んでCPU使用率を下げてください。
+ 例）
+ NSSleep(1)
+
+●NSSystemCall(callstr)
+ 指定したNScripterの機能を呼び出します。
+ NScripter命令で言うmenu_???命令やsystemcall命令等をまとめたものです。
+ メッセージを送るだけなので、即時実行されないこともあります。
+ （その場合、NScripterが次にメッセージを処理したときに実行されます）
+ 次の文字列が指定できます。
+ ★close　  「閉じる」ボタンを押したのと同じ動作をします。
+ ★end  　　 NScripterを終了します。何も聞いてこないので注意してください。end命令と同じです。
+ ★reset　　 NScripterをリセットします。何も聞いてこないので注意してください。reset命令と同じです。
+ ★full 　　 フルスクリーン化します。
+ ★window　　ウィンドウ化します。
+ ★automode　オートモード状態にします。
+ ★skip　　　スキップ状態にします。
+ ★skipoff　 スキップ状態を解除します。
+
+ 例）
+ NSSystemCall("close")
+
+●arcname,offset,length=NSGetFileInfo(filename)
+ 指定したファイルfilenameをnsaもしくはns2アーカイブから探し、
+ アーカイブのファイル名arcnameと、スタート位置offset（ファイル先頭から）と、
+ サイズlength（単位バイト）を返します。
+ ただし、アーカイブでなく生でそのファイルがある場合は、
+ arcnameにはfilenameそのまま、位置とサイズにはともに０を返します。
+ （生ファイルのサイズを代入するわけではないので注意）
+ ファイルがなかったときはarcnameにnilを返します。
+ 例）arcname,offset,length=NSGetFileInfo("test.dat")
+
+●NSExecAnimation()
+ NScripterのアニメーション処理を実行します。
+ 普段は定期的に呼ばれている関数ですが、Lua内からは自動では呼ばれないので、
+ アニメーションを実行する必要がある場合は、時々この命令を呼んでください。
+ （メッセージ待ちの時などに呼ぶのが一般的な使い方です）
+ なお、アニメーションによってLua関数NSCALL_animationが呼ばれる可能性がありますが、
+ NSCALL_animationの中からこの関数を呼ぶと無限ループするので、呼ばないでください。
+ なお、この関数だけでは表示はされません。NSUpdate()もしくはNSExec("print 1")などを呼ぶ必要があります。
+
+
+
+ここから下は、lsp系命令(NSSp～)、lsp2系命令(NSSp2～)、dwave命令(NSOgg～、ただしnsogg2.dll使用前提）
+の機能を利用する低水準関数です。
+Luaで記述するときは文字列をいちいち書くのが面倒な場合はこちらのほうが楽に書けるかもしれません。
+覚えるのが面倒な場合は、一部を除いてだいたいNSExecで代用が出来ますので、そちらを使ってもいいです。
+
+●NSInvalidate(lx,uy,rx,dy)
+無効領域を追加します。この後NSUpdateで再描画します。
+例）NSInvalidate(10,10,100,100) -- (10,10)-(100,100) 幅と高さではなく、「座標」です。
+
+●NSUpdate()
+無効領域を再描画します。print 1と等価です。
+例）NSUpdate()
+
+●NSSpLoad(num,filename)
+普通のスプライト（lsp系）をロードします。
+ファイル名にはlspで使えるのと同じタグが使えます。
+画面外にロードしますので、移動しないと見えません。
+例）NSSpLoad(0,":a/2,0,3;test.bmp")
+
+●NSSpMove(num,lx,ly,alpha)
+スプライトを移動します。
+mspと同じく、この命令だけでは画面に反映されません。
+適切なタイミングでNSUpdate()を呼んでください。
+（ほかのスプライトも全部描画してからまとめて呼んだほうが効率がいいです）
+例）NSSpMove(3,100,100,255)
+
+●NSSpClear(num)
+スプライトを消去します。
+この命令だけでは画面に反映されませんのでNSUpdate()を呼んでください。
+例）NSSpClear(2)
+
+●NSSpVisible(num,isvisible)
+スプライトを表示したり消したりします。trueで表示、falseで非表示です。
+この命令だけでは画面に反映されませんのでNSUpdate()を呼んでください。
+例）NSSpVisible(1,true)
+
+
+
+●NSSp2Load(num,filename)
+拡張スプライト（lsp2系）をロードします。
+画面外にロードしますので、移動しないと見えません。
+例）NSSp2Load(0,":a/2,0,3;test.bmp")
+
+●NSSp2Move(num,cx,cy,xs,ys,rot,alpha,ope)
+拡張スプライトを移動します。
+この命令だけでは画面に反映されませんのでNSUpdate()を呼んでください。
+ope=0で普通、ope=1で加算ブレンディング、ope=2で減算ブレンディングです。
+例）NSSp2Move(0,100,100,100,100,45,255,0)
+
+●NSSp2Clear(num)
+スプライトを消去します。
+この命令だけでは画面に反映されませんのでNSUpdate()を呼んでください。
+例）NSSp2Clear(2)
+
+●NSSp2Visible(num,isvisible)
+スプライトを表示したり消したりします。trueで表示、falseで非表示です。
+この命令だけでは画面に反映されませんのでNSUpdate()を呼んでください。
+例）NSSp2Visible(1,true)
+
+●width,height,cellnum=NSSpGetInfo(num)
+スプライトの情報を得ます。幅、高さ、セル数が得られます。
+例）w,h=NSSpGetInfo(2)
+※Luaは戻り値を全部使わなくてもかまいません。
+
+●width,height=NSSp2GetInfo(num)
+スプライトの情報を得ます。幅、高さ、セル数が得られます。
+例）w,h=NSSp2GetInfo(2)
+
+●NSSpCell(num,c)
+スプライトのセルを設定します。
+例）NSSpCell(4,0)
+
+●lx,ly,alpha=NSSpGetPos(num)
+スプライトの位置を得ます。左上座標Ｘ，Ｙ，α値が得られます。
+例）lx,ly=NSSpGetPos(2)
+
+●cx,cy,xs,ys,rot,alpha,ope=NSSp2GetPos(num)
+スプライトの位置を得ます。中心座標Ｘ，Ｙ，横倍率,縦倍率,回転角,α値,出力オプションが得られます。
+例）cx,cy=NSSp2GetPos(7)
+
+●NSOggLoad(ch,filename)
+ストリーミング再生チャンネルchにファイルをロードします。再生はしません。
+nsogg2.dllが必要です。
+例）NSOggLoad(3,"se.ogg")
+
+●NSOggPlay(ch,isloop)
+ロードしたファイルを再生します。isloop=trueでループ、falseで一回だけです。
+nsogg2.dllが必要です。
+例）NSOggPlay(3,false)
+
+●NSOggPlay2(ch,point)
+ロードしたファイルを再生します。ループ開始点を指定できます。
+単位は秒で、double型（実数型）で指定できます。
+例）NSOggPlay2(4,1.4142)
+
+●NSOggClose(ch)
+指定したチャンネルの演奏を終了します。
+例）NSOggClose(4)
+
+●NSOggVolume(ch,vol)
+指定したチャンネルの音量を変更します。
+0～-10000が指定できます。0が最大、-10000が最小です。
+例）NSOggVolume(3,0)
+
+●isplaying=NSOggIsPlaying(ch)
+指定したチャンネルが演奏していればtrue していなければfalseが返ります。
+例）isp=NSOggIsPlaying(10)
+
+●NSOggFade(ch,startvol,endvol,time,closeflag)
+指定したチャンネルをフェード操作します。startvolからendvolまで変化します。timeの単位はミリ秒です。
+closeflag=trueでフェード終了後ファイルをクローズします。falseの時は演奏続行です。
+例）NSOggFade(4,-10000,0,1000,false)
+
+
+●y=NSLinear(x0,y0,x1,y1,x)
+点x0,y0と点x1,y1を通るような関数fの、y=f(x)の値を求めます。
+例）
+y=NSLinear(1,5,3,15,4)
+(1,5)と(3,15)を通る直線はy=5xですので、x=4の時の値20がyに代入されます。
+
+●NSDefSpline(num,xarray,yarray)
+numにはスプライン補間のデータ番号（０～９９）を指定します。
+xarrayにxの座標を小さい順に格納した配列、yarrayにそのxにそれぞれ対応するyの値を格納した配列を渡します。
+スプライン補間に必要な計算をして、そのデータ番号に登録します。
+なお、スプライン補間のためには点のデータは最低でも三つ必要です。
+
+●y=NSSpline(num,x)
+上で定義したデータ番号を指定し、求めたいxの値を指定すると、スプライン補間によってyの値が返ります。
+ここで、xはxarrayに指定した最小値と最大値の間になくてはなりません。
+例）
+xa={1,2,4} ya={2,4,8}
+NSDefSpline(0,xa,ya)
+y=NSSpline(0,3)
+y=6が返ります。

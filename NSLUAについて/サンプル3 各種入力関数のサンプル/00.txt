@@ -1,0 +1,10 @@
+;左クリックかzキー入力で終了。
+*define
+luasub sub
+game
+
+*start
+print 1
+sub
+おしまい\
+end

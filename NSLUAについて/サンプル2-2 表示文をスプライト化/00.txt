@@ -1,0 +1,21 @@
+*define
+luacall tag
+luacall text
+game
+
+*start
+あいうえお\
+[タグつけた]かきくけこ\
+こんなかんじで表示されます。\
+[にょにょ]スプライトです。\
+goto *start
+
+*textbtn
+;普通のボタン処理サブルーチンを呼んでいます。
+;textgosubの必要がありません。
+*lp
+;実験なので手抜き実装です。
+btndef clear
+btnwait2 %0
+if %0=0 return
+goto *lp
