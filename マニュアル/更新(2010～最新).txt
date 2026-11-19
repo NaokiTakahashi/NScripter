@@ -1,8 +1,9 @@
 NScripterの暫定更新データです。
-2026/11/19
-nscmake.exeを修正（本体のnscr.exeはVer3.07のまま）
+2026/11/20
+nscmake.exe・nscmake2.exeを修正（本体のnscr.exeはVer3.07のまま）
 Ver3.06から同梱のnscmake.exeで作ったnscript.datが、改行コードの扱いの誤りで「*defineブロックには、表示文はおけません。」のエラーになる問題を直しました。Ver3.06・3.07のnscmake.exeで作ったnscript.datは作り直してください。
 また、以前のnscmake.exeと同じく、スクリプトのフォルダと保存先を選ぶ画面を出し、終わるとキー入力を待つようにしました（すぐに窓が消えてしまっていました）。
+nscmake2.exeも、nscmake.exeと同じく0.txt～9999.txt（000.txt・0000.txtのような0埋めも可）を扱えるようにしました（以前は00.txt～99.txtだけでした）。
 
 2026/11/19
 Ver3.07公開
